@@ -1,0 +1,195 @@
+Ktor 3.1.0 Release
+Leonid Stashevsky
+Leonid Stashevsky
+February 13, 2025
+
+Ktor 3.1.0 is here! This is the first minor release of the year, bringing exciting new features, performance improvements, and bug fixes. This release includes improvements to server-sent events (SSE), documentation enhancements, WebAssembly (Wasm) support, dependency injection design updates, and some initial steps toward gRPC integration.
+🚀 Get started with Ktor 3.1.0 now!
+
+Ready to explore Ktor 3.1.0? Start building your next project today with our interactive project generator at start.ktor.io. Your feedback and contributions are always welcome!
+
+🔗 Get Started With Ktor | 📢 Join the Community on Reddit and Slack
+Release notes
+Ktor CLI: A new tool to create Ktor projects
+
+We’re introducing a new command-line tool designed to simplify the creation of Ktor projects. It provides an easy-to-use interface for generating project templates with your preferred features, reducing boilerplate and setup times.
+Installation
+MacOS and Linux (with Homebrew https://brew.sh/)
+brew install ktor
+– Windows (with Winget):
+winget install --id=JetBrains.KtorCLI -e
+How to create a project
+
+To start a new project, simply run:
+ktor new
+
+This command opens interactive mode, allowing you to select plugins and configure your project based on the same options available at (start.ktor.io).
+
+For the non-interactive mode, run ktor --help to see the available options.
+Contributing
+
+Ktor CLI is open source! Share your feedback and contribute at https://github.com/ktorio/ktor-cli.
+
+Find more information on YouTrack: KTOR-3808.
+SSE improvements: Serialization, reconnection, heartbeat
+
+Server-sent events (SSE) support has been enhanced with built-in serialization for both the client and server side. The feature allows clients and servers to handle SSE streams with automatic (de)serialization. Users simply provide a deserialize function to convert incoming data into typed objects as follows:
+Client-side SSE with deserialization
+client.sse({
+     url("http://localhost:8080/serverSentEvents")
+ }, deserialize = { typeInfo, jsonString ->
+     val serializer = Json.serializersModule.serializer(typeInfo.kotlinType!!)
+     Json.decodeFromString(serializer, jsonString)!!
+ }) {
+     incoming.collect { event: TypedServerSentEvent<String> ->
+         when (event.event) {
+            "customer" -> {
+                val customer: Customer? = deserialize<Customer>(event.data)
+            }
+            "product" -> {
+                 val product: Product? = deserialize<Product>(event.data)
+            }
+        }
+    }
+}
+Server-side SSE with serialization
+routing {
+     sse("/json", serialize = { typeInfo, it ->
+         val serializer = Json.serializersModule.serializer(typeInfo.kotlinType!!)
+         Json.encodeToString(serializer, it)
+     }) {
+         send(Customer(0, "Jet", "Brains"))
+         send(Product(0, listOf(100, 200)))
+     }
+ }
+
+These improvements simplify working with structured SSE data in Ktor.
+SSE Heartbeat
+
+Server-sent events (SSE) now include the ability to specify a heartbeat event to keep the session active. The heartbeat will send a specified event at a defined interval as long as the session remains active. This helps maintain the connection during idle periods.
+routing {
+    sse {
+        heartbeat {
+            period = 10.seconds
+            event = ServerSentEvent("heartbeat")
+        }
+       //  ...
+    }
+}
+SSE reconnect
+
+Starting from 3.1.0, you can enable the server-sent events (SSE) reconnection feature by setting the maxReconnectionAttempts property to a value greater than zero:
+install(SSE) {
+    maxReconnectionAttempts = 4
+    reconnectionTime = 2.seconds
+}
+
+If the connection to the server is lost, the client will wait for the specified reconnectionTime before attempting to reconnect, making no more than maxReconnectionAttempts attempts to reestablish the connection.
+
+Find more information on YouTrack: KTOR-7435, KTOR-6242, KTOR-7954
+Support multipart with HttpClient
+
+Ktor’s HttpClient now includes improved support for multipart requests, making it easier to upload files and handle complex request bodies across different engines.
+
+It is now possible to receive MultiPartData with the HttpClient:
+val response = client.post("https://myserver.com/multipart/receive")
+val multipart = response.body<MultiPartData>()
+multipart.forEachPart { part ->
+    when (part) {
+        is PartData.FormItem -> {
+            println("Form item key: \${part.name}")
+            val value = part.value
+            // ...
+        }
+        is PartData.FileItem -> {
+            println("file: \${part.name}")
+            println(part.originalFileName)
+            val fileContent: ByteReadChannel = part.provider()
+            // ...
+        }
+    }
+    part.dispose()
+}
+
+Find more information on YouTrack: KTOR-6632
+API and docs improvements process
+
+We are constantly working on polishing the quality of the API and its associated documentation. We understand that reporting problems may be challenging, so to simplify this process, we introduced the Report a Problem link for every API symbol available both in the IDE’s help section and on api.ktor.io.
+
+This button will lead you to the anonymous feedback form (https://ktor.io/feedback/), allowing you to provide API-specific feedback or report a bug. Your feedback will be logged as an issue and addressed in future releases.
+
+Documentation is a key part of Ktor, and we’ve introduced a structured API docs improvement process to ensure better clarity, consistency, and usability for developers.
+Compression plugin can be disabled for a specific request
+
+The Compression plugin compresses responses if the client supports it. However, sometimes compression needs to be suppressed (e.g. for proxying or storing compressed content).
+
+Previously, options were available for compression but not for decompression. Now, we’ve added helpers and flags for finer control:
+fun Application.module() {
+    install(Compression)
+    routing {
+        get("/endpoint-without-compression") {
+            // Prevent response body compression
+            call.suppressCompression()
+            println(call.isDecompressionSuppressed)
+            // Prevent request body decompression
+            call.suppressDecompression()
+            println(call.isCompressionSuppressed) // true
+        }
+    }
+}
+
+Find more information on YouTrack: KTOR-7679
+CIO: Add wasm-js and js targets for the CIO server, client, and network API
+
+The CIO has been expanded to support wasm-js and js targets for both the server and client side. This makes CIO the first server-side JavaScript engine for Ktor, enabling the running of Ktor-based servers directly in JavaScript environments.
+
+Find more information on YouTrack: KTOR-865, KTOR-7675, KTOR-6004
+Further improvements and bug fixes for kotlinx-io integration
+
+The integration with the kotlinx-io continues to be refined, improving performance, memory usage, and closer interactions across Ktor async io implementations. We have also added a new API extension to convert between kotlinx-io and Ktor and Java io primitives.
+
+Find more information on YouTrack: KTOR-7327
+Add Unix Domain Socket support for native targets
+
+Ktor now supports Unix Domain Sockets on native targets, enabling inter-process communication (IPC) without relying on TCP.
+
+Here’s how to create a simple echo server using Unix Domain Sockets:
+fun main() {
+    val socketPath = "ktor-echo-test.sock"
+    val server = aSocket(ActorSelectorManager(Dispatchers.IO)).tcp().bind(UnixSocketAddress(socketPath))
+    println("Server is listening on $socketPath")
+    GlobalScope.launch {
+        val connection = server.accept()
+        val input = connection.openReadChannel()
+        val output = connection.openWriteChannel(autoFlush = true)
+        val message = input.readUTF8Line()
+        println("Received: $message")
+        output.writeStringUtf8("Echo: $message")
+        connection.close()
+    }
+    val client = aSocket(ActorSelectorManager(Dispatchers.IO)).tcp().connect(UnixSocketAddress(socketPath))
+    val clientOutput = client.openWriteChannel(autoFlush = true)
+    clientOutput.writeStringUtf8("Hello, Unix Socket!")
+    val clientInput = client.openReadChannel()
+    println(clientInput.readUTF8Line())
+    client.close()
+    server.close()
+}
+
+Find more information on YouTrack: KTOR-6960
+Curl client engine: Static linking, ARM support, WebSockets
+
+Starting from Ktor 3.1.0, the Curl client engine is statically linked, eliminating the need to install third-party dependencies. This makes it easier to use Curl-based networking. Additionally, ARM architecture support has been added, including for macOS.
+
+Find more information on YouTrack: KTOR-5199
+Welcome Ktor Library Improvement Proposals (KLIP📎)
+
+We’re happy to introduce Ktor Library Improvement Proposals (KLIP) – an open initiative for the community to propose, discuss, and collaborate on new features and improvements for Ktor. The KLIP process is designed to make Ktor’s evolution transparent and community-driven. The KLIP repository is open for contributions, and we welcome everyone to participate in discussions or submit new proposals. Approved KLIPs are merged into the repository and will be implemented in the framework by the team.
+
+The first 📎 dependency injection is available for review and feedback: https://github.com/ktorio/ktor-klip/pull/1
+Looking forward to gRPC support with kotlinx-rpc
+
+The basic support of the gRPC has been added to kotlinx-rpc 0.5.0: https://kotlin.github.io/kotlinx-rpc/grpc-configuration.html#dependencies-configuration. This moves the highly requested KTOR-1501 proposal forward. We’re planning further Ktor integration with gRPC, along with a plugin for start.ktor.io in future releases. This will help to simplify the setup and use of gRPC in Ktor applications.
+MCP: Exposing and consuming APIs for LLMs
+
+In preparation for Ktor 3.1.0, we’ve been helping to build the MCP Kotlin SDK (https://github.com/modelcontextprotocol/kotlin-sdk). This lightweight SDK enables integration between your applications and large language models (LLMs), allowing you to expose your APIs to language models and agents or build clients connecting multiple applications with LLMs. The library is already published on MavenCentral.

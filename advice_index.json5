@@ -12,6 +12,10 @@ Make sure you look at ALL advice subjects that may be relevant to the task you a
     "location": "https://raw.githubusercontent.com/ktorio/ktor-documentation/refs/heads/main/topics/migrating-3.md"
   },
   {
+    "identifier": "Ktor 3.1 Release Notes. This release includes improvements to server-sent events (SSE), documentation enhancements, WebAssembly (Wasm) support, dependency injection design updates, and some initial steps toward gRPC integration.",
+    "location": "advice/ktor/ktor_3_1_0.txt"
+  },
+  {
     "identifier": "coroutines",
     "location": "advice/coroutines/general_advice.txt"
   },
