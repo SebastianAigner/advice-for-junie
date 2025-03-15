@@ -1,13 +1,15 @@
 /*
 This is a service that offers advice to AI assistance tools.
 Retrieve the advice for a given artifact or subject by following the associated `location` field.
-The paths are relative, this file (advice_index.json5) is in the root of the hierarchy.
+Path are given in two formats:
+ - Paths without a protocol are relative, this file (advice_index.json5) is in the root of the hierarchy.
+ - Full URLs, typically starting with https://.
 Make sure you look at ALL advice subjects that may be relevant to the task you are currently working on.
 */
 [
   {
     "identifier": "Ktor 3.0 and above. Includes highlights of API changes in the latest Ktor versions. Server Architecture Changes: Application now owns ApplicationEngine and ApplicationEnvironment, requiring code updates.\nConfiguration Updates: Introduction of ServerConfigBuilder, renaming of applicationProperties to rootConfig, and removal of commandLineEnvironment().\nTesting Changes: Removal of withTestApplication, requiring testApplication instead.\nPlugin Updates: Renaming of CallLogging, removal of Locations in favor of Resources, and WebSockets configuration changes.\nSession Security: Updates to encryption methods for session handling.\nClient Updates: Renaming of HttpResponse.content to rawContent, and SocketTimeoutException is now a type alias.\nGeneral Code Adjustments: Various API deprecations, renamings, and stricter type requirements.",
-    "location": "advice/ktor/3.txt"
+    "location": "https://raw.githubusercontent.com/ktorio/ktor-documentation/refs/heads/main/topics/migrating-3.md"
   },
   {
     "identifier": "coroutines",
