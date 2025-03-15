@@ -1,1 +1,1 @@
-When using the `launch` function from Kotlin coroutines, make sure you always call `coroutineContext.toString().let { println(it) }` as the very first function inside the `launch` lambda. This ensures that the user understands what is happening.
+Don't use GlobalScope.
