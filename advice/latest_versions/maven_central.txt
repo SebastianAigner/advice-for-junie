@@ -1,4 +1,4 @@
-Below is an implementatin of a service that can retrieve the latest version from maven central. You can curl yourself the latest versions by running an equivalent command from the CLI.
+Below is an implementation of a service that can retrieve the latest version from maven central. You can curl yourself the latest versions by running an equivalent command from the CLI.
 
 
 package io.sebi.services
