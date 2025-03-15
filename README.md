@@ -4,6 +4,8 @@
 
 This repo contains advice text designed to be discovered by JetBrains Junie as part of its problem-solving process.
 
+At the moment, this is just an experiment / a playground to understand what can (and can't) be reasonably achieved.
+
 ## How it works
 
 By instructing Junie to query the `advice_index`, it is made aware of the available pieces of advice. The index also contains instructions for Junie on how to retrieve the individual pieces of instructions.
