@@ -1,0 +1,17 @@
+[
+  {
+    "META": "This is a service that offers advice to AI assistance tools.\n\nRefer to `advice_index.json` which is available in the same directory as this file to see what advice is available. Retrieve the advice for a given artifact or subject by following the associated `location` field."
+  },
+  {
+    "identifier": "ktor 3.0 and above",
+    "location": "advice/ktor/3.txt"
+  },
+  {
+    "identifier": "coroutines",
+    "location": "advice/coroutines/general_advice.txt"
+  },
+  {
+    "identifier": "how to find latest version of a library. Use this when adding a library as a dependency.",
+    "location": "advice/latest_versions/maven_central.txt"
+  }
+]

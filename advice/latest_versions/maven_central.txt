@@ -1,0 +1,92 @@
+Below is an implementatin of a service that can retrieve the latest version from maven central. You can curl yourself the latest versions by running an equivalent command from the CLI.
+
+
+package io.sebi.services
+
+import io.ktor.client.*
+import io.ktor.client.call.*
+import io.ktor.client.plugins.contentnegotiation.*
+import io.ktor.client.request.*
+import io.ktor.serialization.kotlinx.json.*
+import kotlinx.serialization.json.*
+import kotlinx.serialization.Serializable
+
+/**
+ * Network implementation of the MavenCentralService interface.
+ * Interacts with Maven Central repository via HTTP.
+ */
+class NetworkMavenCentralService(private val client: HttpClient) : MavenCentralService {
+
+    companion object {
+        private const val MAVEN_CENTRAL_API_URL = "https://search.maven.org/solrsearch/select"
+    }
+
+    /**
+     * Fetches the latest version of an artifact from Maven Central.
+     * @param groupId The group ID of the artifact
+     * @param artifactId The artifact ID
+     * @return The latest version of the artifact
+     * @throws MavenCentralException if there's an error fetching the version
+     */
+    override suspend fun getLatestVersion(groupId: String, artifactId: String): String {
+        try {
+            val response = client.get(MAVEN_CENTRAL_API_URL) {
+                parameter("q", "g:\"$groupId\" AND a:\"$artifactId\"")
+                parameter("rows", "1")
+                parameter("wt", "json")
+                header("Accept", "application/json")
+            }
+
+            val jsonResponse = response.body<JsonObject>()
+            val responseHeader = jsonResponse["responseHeader"]?.jsonObject
+            val status = responseHeader?.get("status")?.jsonPrimitive?.int
+
+            if (status != 0) {
+                throw MavenCentralException("Error response from Maven Central: status=$status")
+            }
+
+            val response2 = jsonResponse["response"]?.jsonObject
+            val numFound = response2?.get("numFound")?.jsonPrimitive?.int
+
+            if (numFound == 0) {
+                throw MavenCentralException("Artifact not found: $groupId:$artifactId")
+            }
+
+            val docs = response2?.get("docs")?.jsonArray
+            if (docs.isNullOrEmpty()) {
+                throw MavenCentralException("No documents found for artifact: $groupId:$artifactId")
+            }
+
+            val latestVersion = docs[0].jsonObject["latestVersion"]?.jsonPrimitive?.content
+                ?: docs[0].jsonObject["v"]?.jsonPrimitive?.content
+                ?: throw MavenCentralException("Version information not found for artifact: $groupId:$artifactId")
+
+            // Filter out pre-release versions (alpha, beta, rc, etc.)
+            if (isPreReleaseVersion(latestVersion)) {
+                throw MavenCentralException("Latest version is a pre-release version: $latestVersion")
+            }
+
+            return latestVersion
+        } catch (e: Exception) {
+            if (e is MavenCentralException) throw e
+            throw MavenCentralException("Error fetching latest version for $groupId:$artifactId: ${e.message}", e)
+        }
+    }
+
+    /**
+     * Checks if a version string represents a pre-release version.
+     * @param version The version string to check
+     * @return true if the version is a pre-release version, false otherwise
+     */
+    private fun isPreReleaseVersion(version: String): Boolean {
+        val lowerVersion = version.lowercase()
+        return lowerVersion.contains("alpha") ||
+               lowerVersion.contains("beta") ||
+               lowerVersion.contains("rc") ||
+               lowerVersion.contains("snapshot") ||
+               lowerVersion.contains("dev") ||
+               lowerVersion.contains("preview") ||
+               lowerVersion.contains("eap")
+    }
+}
+
