@@ -16,11 +16,15 @@ Make sure you look at ALL advice subjects that may be relevant to the task you a
     "location": "advice/coroutines/general_advice.txt"
   },
   {
-    "identifier": "how to find latest version of a library. Use this when adding a library as a dependency.",
+    "identifier": "how to find latest version of a library or dependency on maven central. Use this when adding a library as a dependency.",
     "location": "advice/latest_versions/maven_central.txt"
   },
   {
     "identifier": "how to find the latest published version of kotlin",
     "location": "advice/kotlin/kotlin_versions.txt"
+  },
+  {
+    "identifier": "how to find the latest published version of gradle",
+    "location": "advice/gradle/latest_gradle_version.txt"
   }
 ]
